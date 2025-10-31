@@ -1,0 +1,62 @@
+will be using the spring starter to built the projects
+
+Step 1: Project Structure Setup (Monorepo)
+Create a root folder for your project, e.g., upi-payment-system.
+
+Inside this folder, create a parent pom.xml. This is the most important POM file. It will manage all our dependencies and versions.
+
+Action: Create this pom.xml. It should define the spring-boot-starter-parent and a <dependencyManagement> section for spring-cloud-dependencies. This ensures all our modules use the same Spring Boot and Spring Cloud versions. It should also have a <modules> section, which will be empty for now.
+
+Hint: Use start.spring.io to generate a base project to get a well-formed pom.xml. Just make sure its packaging type is <packaging>pom</packaging>.
+
+Step 2: Create the Config Server
+Create a new Git repository somewhere (e.g., on GitHub) named upi-config-repo. This repo will hold the configuration files for all our microservices.
+Inside upi-config-repo, create a file named application.yml. Put a test property in it:
+YAML
+
+greeting:
+  message: "Hello from the default config!"
+Create a new Spring Boot module inside your monorepo folder called config-server.
+In its pom.xml:
+It should declare the main parent POM we created in Step 1.
+Add the dependency: spring-cloud-config-server.
+In its main application class (ConfigServerApplication.java):
+Add the annotation @EnableConfigServer.
+In its application.properties (or application.yml):
+Set the server port: server.port=8888 (or something similar).
+
+Link it to your Git config repo: spring.cloud.config.server.git.uri=URL_TO_YOUR_UPI_CONFIG_REPO.
+
+Action: Build and run the Config Server. Test it by visiting http://localhost:8888/application/default in your browser. You should see the greeting.message property you defined in Git.
+
+Step 3: Create the Discovery Server (Eureka)
+Create a new Spring Boot module inside your monorepo called discovery-server.
+In its pom.xml:
+Add the dependency: spring-cloud-starter-netflix-eureka-server.
+In its main application class (DiscoveryServerApplication.java):
+Add the annotation @EnableEurekaServer.
+In its application.properties:
+Set the server port: server.port=8761 (the default for Eureka).
+
+Add these two crucial properties to prevent it from trying to register with itself:
+
+properties
+
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+Action: Build and run the Discovery Server. Visit http://localhost:8761 in your browser. You should see the Eureka dashboard. It will be empty for now, which is correct.
+
+Config server port 8888
+Discovery server port 7777
+
+
+
+
+
+
+these are the steps that i want to perform will go 1 by 1
+
+i have provided you the existing codes which i have, you have to guide me to build this proejct from the scratch tell me what to do and how to do in depth like if i want to add or replace the code and you are giving me the code snippet then tell me whether to replace the code or the add it in whichh line, path of the file of code. 
+
+
+start from the scratch that how to built project on spring starter how to paste it in eclipse and how to import it as a project each and every small steps.
