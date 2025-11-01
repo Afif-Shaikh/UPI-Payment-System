@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # ------------------ DATABASE SERVICE ------------------
+  postgres-db:
+    image: postgres:14.5 # Use a specific version of the official Postgres image
+    container_name: postgres-db
+    ports:
+      - "5432:5432" # Map local port 5432 to the container's port 5432
+    environment:
+      - POSTGRES_USER=postgres # Use the same credentials as in your config files
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=upi_payment_system
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # This persists your database data even if you stop/remove the container
+    networks:
+      - upi-network
+
+  # ------------------ INFRASTRUCTURE SERVICES ------------------
+  config-server:
+    build:
+      context: . # Use the current directory as the build context
+      dockerfile: config-server/Dockerfile # Point to the Dockerfile we created
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - upi-network
+    depends_on: # Don't start this until the database is ready (optional but good practice)
+      - postgres-db
+    restart: always
+
+  discovery-server:
+    build:
+      context: . # Build context is the root of the monorepo
+      dockerfile: discovery-server/Dockerfile # Point to the discovery-server Dockerfile
+    container_name: discovery-server
+    ports:
+      - "7777:7777"
+    networks:
+      - upi-network
+    depends_on:
+      - config-server # Must wait for config-server to be up
+    restart: always
+
+  api-gateway:
+    build:
+      context: . # Build context is the root of the monorepo
+      dockerfile: api-gateway/Dockerfile # Point to the api-gateway Dockerfile
+    container_name: api-gateway
+    ports:
+      - "9999:9999"
+    networks:
+      - upi-network
+    depends_on:
+      - discovery-server # Must wait for discovery-server to be up
+    restart: always
+
+  # ------------------ BUSINESS SERVICES ------------------
+  user-service:
+    build:
+      context: . # Build context is the root of the monorepo
+      dockerfile: user-service/Dockerfile # Point to the user-service Dockerfile
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    networks:
+      - upi-network
+    depends_on:
+      - config-server
+      - discovery-server
+      - postgres-db
+      - api-gateway # Depends on all infra services indirectly
+    restart: always
+
+
+# --- NETWORKS & VOLUMES DEFINITION ---
+networks:
+  upi-network: # A custom bridge network for our services to communicate
+    driver: bridge
+
+volumes:
+  postgres-data: # The volume for persisting database data
+    driver: local
