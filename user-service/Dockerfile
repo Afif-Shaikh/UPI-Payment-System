@@ -33,6 +33,13 @@ WORKDIR /app
 # The path to the JAR is inside the 'target' directory of the module.
 COPY --from=build /app/user-service/target/*.jar app.jar
 
+# Copy wait-for-it script
+#COPY wait-for-it.sh /wait-for-it.sh
+#RUN chmod +x /wait-for-it.sh
+
+# Change ENTRYPOINT
+#ENTRYPOINT ["/wait-for-it.sh", "postgres-db:5432", "--timeout=60", "--", "java", "-jar", "app.jar"]
+
 # Expose the port the application runs on (adjust the port if necessary)
 EXPOSE 8080
 

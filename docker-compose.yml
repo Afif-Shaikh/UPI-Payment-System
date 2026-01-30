@@ -6,7 +6,7 @@ services:
     image: postgres:14.5 # Use a specific version of the official Postgres image
     container_name: postgres-db
     ports:
-      - "5432:5432" # Map local port 5432 to the container's port 5432
+      - "5431:5432" # Map local port 5432 to the container's port 5432
     environment:
       - POSTGRES_USER=postgres # Use the same credentials as in your config files
       - POSTGRES_PASSWORD=root
@@ -64,6 +64,13 @@ services:
     container_name: user-service
     ports:
       - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/upi_payment_system
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
     networks:
       - upi-network
     depends_on:
