@@ -1,0 +1,33 @@
+# Bank Service Configuration
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/upi_payment_system
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:7777/eureka/
+  instance:
+    hostname: bank-service
+    prefer-ip-address: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.project.bank_service: DEBUG

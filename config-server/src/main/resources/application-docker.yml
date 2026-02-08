@@ -1,0 +1,5 @@
+# Docker profile overrides
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:7777/eureka/
