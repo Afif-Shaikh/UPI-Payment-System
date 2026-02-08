@@ -23,7 +23,7 @@
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 			<version>4.3.0</version>
 		</dependency>
-		<!--  Enables bootstrap.properties in Spring Boot 3.x  -->
+		<!--  Enables bootstrap.yml in Spring Boot 3.x  -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-bootstrap</artifactId>

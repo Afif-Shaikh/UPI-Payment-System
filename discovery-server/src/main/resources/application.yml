@@ -4,11 +4,18 @@ server:
 spring:
   application:
     name: discovery-server
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 
 eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
   client:
     register-with-eureka: false
     fetch-registry: false
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:7777/eureka/}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

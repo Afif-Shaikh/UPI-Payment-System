@@ -1,16 +1,37 @@
 package com.project.user_service.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import com.project.user_service.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+@Repository
+public interface UserRepository extends JpaRepository<User, String> {  // Changed from UUID to String
 
-    // Find a user by phone number
-    Optional<User> findByPhone(String phone);
+    Optional<User> findByPhoneAndActiveTrue(String phone);
 
-    // Find a user by email
-    Optional<User> findByEmail(String email);
+    Optional<User> findByEmailAndActiveTrue(String email);
+
+    Optional<User> findByIdAndActiveTrue(String id);  // Changed from UUID to String
+
+    boolean existsByPhone(String phone);
+
+    boolean existsByEmail(String email);
+
+    @Modifying
+    @Query("UPDATE User u SET u.lastLoginAt = :loginTime WHERE u.id = :userId")
+    void updateLastLoginTime(@Param("userId") String userId, @Param("loginTime") LocalDateTime loginTime);
+
+    @Modifying
+    @Query("UPDATE User u SET u.active = false, u.updatedAt = CURRENT_TIMESTAMP WHERE u.id = :userId")
+    void deactivateUser(@Param("userId") String userId);
+
+    @Modifying
+    @Query("UPDATE User u SET u.kycVerified = :verified, u.updatedAt = CURRENT_TIMESTAMP WHERE u.id = :userId")
+    void updateKycStatus(@Param("userId") String userId, @Param("verified") boolean verified);
 }
