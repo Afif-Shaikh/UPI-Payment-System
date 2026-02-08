@@ -114,6 +114,30 @@ services:
       - config-server
     restart: always
 
+  # ==================== VPA SERVICE ====================
+  vpa-service:
+    build:
+      context: .
+      dockerfile: vpa-service/Dockerfile
+    container_name: vpa-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/upi_payment_system
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:7777/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=vpa-service
+    networks:
+      - upi-network
+    depends_on:
+      - postgres-db
+      - discovery-server
+      - config-server
+    restart: always
+
 # ==================== NETWORKS & VOLUMES ====================
 networks:
   upi-network:

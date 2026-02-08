@@ -10,19 +10,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class LinkAccountRequest {
 
-    @NotNull(message = "User ID is required")
-    private UUID userId;
+    @NotBlank(message = "User ID is required")
+    private String userId;  // Changed from UUID to String (e.g., U100001)
 
-    @NotNull(message = "Bank ID is required")
-    private UUID bankId;
+    @NotBlank(message = "Bank ID is required")
+    private String bankId;  // Changed from UUID to String (e.g., BSBI001)
 
     @NotBlank(message = "Account number is required")
     @Size(min = 9, max = 18, message = "Account number must be between 9 and 18 digits")

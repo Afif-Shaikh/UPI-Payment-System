@@ -10,54 +10,43 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface BankAccountRepository extends JpaRepository<BankAccount, UUID> {
+public interface BankAccountRepository extends JpaRepository<BankAccount, String> {  // Changed from UUID to String
 
-    // Find by ID (active only)
-    Optional<BankAccount> findByIdAndActiveTrue(UUID id);
+    Optional<BankAccount> findByIdAndActiveTrue(String id);
 
-    // Find all accounts for a user
-    List<BankAccount> findAllByUserIdAndActiveTrue(UUID userId);
+    List<BankAccount> findAllByUserIdAndActiveTrue(String userId);
 
-    // Find by account number and IFSC
     Optional<BankAccount> findByAccountNumberAndIfscCodeAndActiveTrue(String accountNumber, String ifscCode);
 
-    // Find primary account for user
-    Optional<BankAccount> findByUserIdAndIsPrimaryTrueAndActiveTrue(UUID userId);
+    Optional<BankAccount> findByUserIdAndIsPrimaryTrueAndActiveTrue(String userId);
 
-    // Check if account exists for user
-    boolean existsByUserIdAndAccountNumberAndIfscCode(UUID userId, String accountNumber, String ifscCode);
+    boolean existsByUserIdAndAccountNumberAndIfscCode(String userId, String accountNumber, String ifscCode);
 
-    // Update balance
     @Modifying
     @Query("UPDATE BankAccount ba SET ba.balance = ba.balance + :amount, ba.updatedAt = CURRENT_TIMESTAMP WHERE ba.id = :accountId")
-    void creditBalance(@Param("accountId") UUID accountId, @Param("amount") BigDecimal amount);
+    void creditBalance(@Param("accountId") String accountId, @Param("amount") BigDecimal amount);
 
     @Modifying
     @Query("UPDATE BankAccount ba SET ba.balance = ba.balance - :amount, ba.updatedAt = CURRENT_TIMESTAMP WHERE ba.id = :accountId AND ba.balance >= :amount")
-    int debitBalance(@Param("accountId") UUID accountId, @Param("amount") BigDecimal amount);
+    int debitBalance(@Param("accountId") String accountId, @Param("amount") BigDecimal amount);
 
-    // Set primary account
     @Modifying
     @Query("UPDATE BankAccount ba SET ba.isPrimary = false, ba.updatedAt = CURRENT_TIMESTAMP WHERE ba.userId = :userId AND ba.isPrimary = true")
-    void clearPrimaryAccount(@Param("userId") UUID userId);
+    void clearPrimaryAccount(@Param("userId") String userId);
 
     @Modifying
     @Query("UPDATE BankAccount ba SET ba.isPrimary = true, ba.updatedAt = CURRENT_TIMESTAMP WHERE ba.id = :accountId")
-    void setPrimaryAccount(@Param("accountId") UUID accountId);
+    void setPrimaryAccount(@Param("accountId") String accountId);
 
-    // Deactivate account
     @Modifying
     @Query("UPDATE BankAccount ba SET ba.active = false, ba.updatedAt = CURRENT_TIMESTAMP WHERE ba.id = :accountId")
-    void deactivateAccount(@Param("accountId") UUID accountId);
+    void deactivateAccount(@Param("accountId") String accountId);
 
-    // Verify account
     @Modifying
     @Query("UPDATE BankAccount ba SET ba.isVerified = true, ba.updatedAt = CURRENT_TIMESTAMP WHERE ba.id = :accountId")
-    void verifyAccount(@Param("accountId") UUID accountId);
+    void verifyAccount(@Param("accountId") String accountId);
 
-    // Count accounts for user
-    long countByUserIdAndActiveTrue(UUID userId);
+    long countByUserIdAndActiveTrue(String userId);
 }

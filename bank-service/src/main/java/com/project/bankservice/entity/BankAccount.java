@@ -85,4 +85,4 @@ public class BankAccount {
         NRI,
         FIXED_DEPOSIT
     }
-}2
+}

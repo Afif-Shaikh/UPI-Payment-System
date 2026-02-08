@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -18,8 +17,8 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class BankAccountResponse {
 
-    private UUID id;
-    private UUID userId;
+    private String id;  // Changed from UUID to String (e.g., A100001SBISAV)
+    private String userId;  // Changed from UUID to String (e.g., U100001)
     private String bankName;
     private String bankCode;
     private String maskedAccountNumber;
@@ -32,10 +31,6 @@ public class BankAccountResponse {
     private Boolean active;
     private LocalDateTime createdAt;
 
-    /**
-     * Mask account number - show only last 4 digits
-     * Example: XXXXXX1234
-     */
     public static String maskAccountNumber(String accountNumber) {
         if (accountNumber == null || accountNumber.length() < 4) {
             return accountNumber;

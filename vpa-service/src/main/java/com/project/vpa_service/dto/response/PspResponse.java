@@ -1,4 +1,4 @@
-package com.project.bank_service.dto.response;
+package com.project.vpa_service.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -13,17 +13,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class BankResponse {
+public class PspResponse {
 
-    private String id;  // Changed from UUID to String (e.g., BSBI001)
+    private String id;
+    private String pspName;
+    private String pspHandle;
     private String bankName;
-    private String bankCode;
-    private String ifscPrefix;
+    private String bankIfscPrefix;
     private String logoUrl;
-    private Boolean upiEnabled;
-    private Boolean impsEnabled;
-    private Boolean neftEnabled;
-    private Boolean rtgsEnabled;
     private Boolean active;
     private LocalDateTime createdAt;
 }
