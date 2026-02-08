@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,14 +21,11 @@ import java.util.stream.Collectors;
 public class BankService {
 
     private final BankRepository bankRepository;
+    private final IdGeneratorService idGeneratorService;
 
-    /**
-     * Create a new bank
-     */
     public BankResponse createBank(CreateBankRequest request) {
         log.info("Creating new bank: {}", request.getBankName());
 
-        // Check for duplicates
         if (bankRepository.existsByBankCode(request.getBankCode())) {
             throw new DuplicateResourceException("Bank", "bankCode", request.getBankCode());
         }
@@ -38,7 +34,11 @@ public class BankService {
             throw new DuplicateResourceException("Bank", "ifscPrefix", request.getIfscPrefix());
         }
 
+        // Generate custom Bank ID
+        String bankId = idGeneratorService.generateBankId(request.getBankCode());
+
         Bank bank = Bank.builder()
+                .id(bankId)
                 .bankName(request.getBankName().trim())
                 .bankCode(request.getBankCode().toUpperCase())
                 .ifscPrefix(request.getIfscPrefix().toUpperCase())
@@ -56,68 +56,46 @@ public class BankService {
         return mapToBankResponse(bank);
     }
 
-    /**
-     * Get bank by ID
-     */
     @Transactional(readOnly = true)
-    public BankResponse getBankById(UUID bankId) {
+    public BankResponse getBankById(String bankId) {
         log.info("Fetching bank by ID: {}", bankId);
-
         Bank bank = bankRepository.findByIdAndActiveTrue(bankId)
-                .orElseThrow(() -> new BankNotFoundException("id", bankId.toString()));
-
+                .orElseThrow(() -> new BankNotFoundException("id", bankId));
         return mapToBankResponse(bank);
     }
 
-    /**
-     * Get bank by bank code
-     */
     @Transactional(readOnly = true)
     public BankResponse getBankByCode(String bankCode) {
         log.info("Fetching bank by code: {}", bankCode);
-
         Bank bank = bankRepository.findByBankCodeAndActiveTrue(bankCode.toUpperCase())
                 .orElseThrow(() -> new BankNotFoundException("bankCode", bankCode));
-
         return mapToBankResponse(bank);
     }
 
-    /**
-     * Get all active banks
-     */
     @Transactional(readOnly = true)
     public List<BankResponse> getAllBanks() {
         log.info("Fetching all active banks");
-
         return bankRepository.findAllByActiveTrue()
                 .stream()
                 .map(this::mapToBankResponse)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get all UPI-enabled banks
-     */
     @Transactional(readOnly = true)
     public List<BankResponse> getUpiEnabledBanks() {
         log.info("Fetching all UPI-enabled banks");
-
         return bankRepository.findAllByUpiEnabledTrueAndActiveTrue()
                 .stream()
                 .map(this::mapToBankResponse)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get bank entity by ID (for internal use)
-     */
     @Transactional(readOnly = true)
-    public Bank getBankEntityById(UUID bankId) {
+    public Bank getBankEntityById(String bankId) {
         return bankRepository.findByIdAndActiveTrue(bankId)
-                .orElseThrow(() -> new BankNotFoundException("id", bankId.toString()));
+                .orElseThrow(() -> new BankNotFoundException("id", bankId));
     }
 
-    // Helper method
     private BankResponse mapToBankResponse(Bank bank) {
         return BankResponse.builder()
                 .id(bank.getId())

@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,33 +25,35 @@ public class BankAccountService {
 
     private final BankAccountRepository bankAccountRepository;
     private final BankService bankService;
+    private final IdGeneratorService idGeneratorService;
 
-    /**
-     * Link a new bank account
-     */
     public BankAccountResponse linkAccount(LinkAccountRequest request) {
         log.info("Linking account for user: {}", request.getUserId());
 
-        // Check if account already linked
         if (bankAccountRepository.existsByUserIdAndAccountNumberAndIfscCode(
                 request.getUserId(), request.getAccountNumber(), request.getIfscCode())) {
             throw new DuplicateResourceException("BankAccount", "accountNumber", request.getAccountNumber());
         }
 
-        // Get bank
         Bank bank = bankService.getBankEntityById(request.getBankId());
 
-        // Validate IFSC prefix matches bank
         if (!request.getIfscCode().startsWith(bank.getIfscPrefix())) {
             throw new IllegalArgumentException("IFSC code does not match the selected bank");
         }
 
-        // If this is the first account or marked as primary, clear existing primary
         if (request.getIsPrimary() || bankAccountRepository.countByUserIdAndActiveTrue(request.getUserId()) == 0) {
             bankAccountRepository.clearPrimaryAccount(request.getUserId());
         }
 
+        // Generate custom Account ID
+        String accountId = idGeneratorService.generateAccountId(
+                request.getUserId(),
+                bank.getBankCode(),
+                request.getAccountType()
+        );
+
         BankAccount account = BankAccount.builder()
+                .id(accountId)
                 .userId(request.getUserId())
                 .bank(bank)
                 .accountNumber(request.getAccountNumber())
@@ -71,53 +72,36 @@ public class BankAccountService {
         return mapToAccountResponse(account);
     }
 
-    /**
-     * Get account by ID
-     */
     @Transactional(readOnly = true)
-    public BankAccountResponse getAccountById(UUID accountId) {
+    public BankAccountResponse getAccountById(String accountId) {
         log.info("Fetching account by ID: {}", accountId);
-
         BankAccount account = bankAccountRepository.findByIdAndActiveTrue(accountId)
-                .orElseThrow(() -> new AccountNotFoundException("id", accountId.toString()));
-
+                .orElseThrow(() -> new AccountNotFoundException("id", accountId));
         return mapToAccountResponse(account);
     }
 
-    /**
-     * Get all accounts for a user
-     */
     @Transactional(readOnly = true)
-    public List<BankAccountResponse> getAccountsByUserId(UUID userId) {
+    public List<BankAccountResponse> getAccountsByUserId(String userId) {
         log.info("Fetching accounts for user: {}", userId);
-
         return bankAccountRepository.findAllByUserIdAndActiveTrue(userId)
                 .stream()
                 .map(this::mapToAccountResponse)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get primary account for a user
-     */
     @Transactional(readOnly = true)
-    public BankAccountResponse getPrimaryAccount(UUID userId) {
+    public BankAccountResponse getPrimaryAccount(String userId) {
         log.info("Fetching primary account for user: {}", userId);
-
         BankAccount account = bankAccountRepository.findByUserIdAndIsPrimaryTrueAndActiveTrue(userId)
-                .orElseThrow(() -> new AccountNotFoundException("userId (primary)", userId.toString()));
-
+                .orElseThrow(() -> new AccountNotFoundException("userId (primary)", userId));
         return mapToAccountResponse(account);
     }
 
-    /**
-     * Set account as primary
-     */
-    public void setPrimaryAccount(UUID userId, UUID accountId) {
+    public void setPrimaryAccount(String userId, String accountId) {
         log.info("Setting account {} as primary for user: {}", accountId, userId);
 
         BankAccount account = bankAccountRepository.findByIdAndActiveTrue(accountId)
-                .orElseThrow(() -> new AccountNotFoundException("id", accountId.toString()));
+                .orElseThrow(() -> new AccountNotFoundException("id", accountId));
 
         if (!account.getUserId().equals(userId)) {
             throw new IllegalArgumentException("Account does not belong to the user");
@@ -129,10 +113,7 @@ public class BankAccountService {
         log.info("Primary account updated successfully");
     }
 
-    /**
-     * Credit amount to account
-     */
-    public void creditAccount(UUID accountId, BigDecimal amount) {
+    public void creditAccount(String accountId, BigDecimal amount) {
         log.info("Crediting {} to account: {}", amount, accountId);
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -140,17 +121,14 @@ public class BankAccountService {
         }
 
         if (!bankAccountRepository.existsById(accountId)) {
-            throw new AccountNotFoundException("id", accountId.toString());
+            throw new AccountNotFoundException("id", accountId);
         }
 
         bankAccountRepository.creditBalance(accountId, amount);
         log.info("Amount credited successfully");
     }
 
-    /**
-     * Debit amount from account
-     */
-    public void debitAccount(UUID accountId, BigDecimal amount) {
+    public void debitAccount(String accountId, BigDecimal amount) {
         log.info("Debiting {} from account: {}", amount, accountId);
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -158,7 +136,7 @@ public class BankAccountService {
         }
 
         BankAccount account = bankAccountRepository.findByIdAndActiveTrue(accountId)
-                .orElseThrow(() -> new AccountNotFoundException("id", accountId.toString()));
+                .orElseThrow(() -> new AccountNotFoundException("id", accountId));
 
         int updated = bankAccountRepository.debitBalance(accountId, amount);
 
@@ -169,48 +147,32 @@ public class BankAccountService {
         log.info("Amount debited successfully");
     }
 
-    /**
-     * Get account balance
-     */
     @Transactional(readOnly = true)
-    public BigDecimal getBalance(UUID accountId) {
+    public BigDecimal getBalance(String accountId) {
         log.info("Fetching balance for account: {}", accountId);
-
         BankAccount account = bankAccountRepository.findByIdAndActiveTrue(accountId)
-                .orElseThrow(() -> new AccountNotFoundException("id", accountId.toString()));
-
+                .orElseThrow(() -> new AccountNotFoundException("id", accountId));
         return account.getBalance();
     }
 
-    /**
-     * Verify account
-     */
-    public void verifyAccount(UUID accountId) {
+    public void verifyAccount(String accountId) {
         log.info("Verifying account: {}", accountId);
-
         if (!bankAccountRepository.existsById(accountId)) {
-            throw new AccountNotFoundException("id", accountId.toString());
+            throw new AccountNotFoundException("id", accountId);
         }
-
         bankAccountRepository.verifyAccount(accountId);
         log.info("Account verified successfully");
     }
 
-    /**
-     * Deactivate account
-     */
-    public void deactivateAccount(UUID accountId) {
+    public void deactivateAccount(String accountId) {
         log.info("Deactivating account: {}", accountId);
-
         if (!bankAccountRepository.existsById(accountId)) {
-            throw new AccountNotFoundException("id", accountId.toString());
+            throw new AccountNotFoundException("id", accountId);
         }
-
         bankAccountRepository.deactivateAccount(accountId);
         log.info("Account deactivated successfully");
     }
 
-    // Helper method
     private BankAccountResponse mapToAccountResponse(BankAccount account) {
         return BankAccountResponse.builder()
                 .id(account.getId())

@@ -1,15 +1,14 @@
 package com.project.bank_service.exception;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public class InsufficientBalanceException extends RuntimeException {
 
-    private final UUID accountId;
+    private final String accountId;  // Changed from UUID to String
     private final BigDecimal requestedAmount;
     private final BigDecimal availableBalance;
 
-    public InsufficientBalanceException(UUID accountId, BigDecimal requestedAmount, BigDecimal availableBalance) {
+    public InsufficientBalanceException(String accountId, BigDecimal requestedAmount, BigDecimal availableBalance) {
         super(String.format("Insufficient balance in account %s. Requested: %s, Available: %s",
                 accountId, requestedAmount, availableBalance));
         this.accountId = accountId;
@@ -17,7 +16,7 @@ public class InsufficientBalanceException extends RuntimeException {
         this.availableBalance = availableBalance;
     }
 
-    public UUID getAccountId() {
+    public String getAccountId() {
         return accountId;
     }
 

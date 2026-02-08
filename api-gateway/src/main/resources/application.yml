@@ -21,6 +21,11 @@ spring:
           predicates:
             - Path=/api/banks/**,/api/accounts/**
 
+        - id: vpa-service
+          uri: lb://vpa-service
+          predicates:
+            - Path=/api/vpas/**,/api/psps/**
+
 eureka:
   client:
     register-with-eureka: true
