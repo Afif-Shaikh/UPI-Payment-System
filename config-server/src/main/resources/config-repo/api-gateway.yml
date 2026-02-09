@@ -1,0 +1,31 @@
+# API Gateway Configuration
+server:
+  port: 9999
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+
+        - id: bank-service
+          uri: lb://bank-service
+          predicates:
+            - Path=/api/banks/**,/api/accounts/**
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:7777/eureka/
+  instance:
+    hostname: api-gateway
+    prefer-ip-address: false
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

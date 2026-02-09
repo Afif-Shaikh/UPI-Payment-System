@@ -1,0 +1,42 @@
+server:
+  port: 9999
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+
+        - id: bank-service
+          uri: lb://bank-service
+          predicates:
+            - Path=/api/banks/**,/api/accounts/**
+
+        - id: vpa-service
+          uri: lb://vpa-service
+          predicates:
+            - Path=/api/vpas/**,/api/psps/**
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:7777/eureka/}
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

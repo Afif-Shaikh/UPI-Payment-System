@@ -1,0 +1,14 @@
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+
+# Copy only this service's pom.xml and src
+COPY config-server/pom.xml .
+COPY config-server/src ./src
+
+RUN mvn clean package -Dmaven.test.skip=true -B
+
+FROM eclipse-temurin:17-jre-jammy
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8888
+ENTRYPOINT ["java", "-jar", "app.jar"]
