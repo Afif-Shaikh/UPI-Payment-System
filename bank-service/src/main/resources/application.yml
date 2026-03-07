@@ -47,3 +47,17 @@ management:
 logging:
   level:
     com.project.bank_service: DEBUG
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+  show-actuator: false
+  packages-to-scan: com.project.bank_service.controller

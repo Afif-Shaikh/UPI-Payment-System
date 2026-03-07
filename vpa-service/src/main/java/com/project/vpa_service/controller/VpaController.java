@@ -6,6 +6,9 @@ import com.project.vpa_service.dto.response.ApiResponse;
 import com.project.vpa_service.dto.response.VpaResponse;
 import com.project.vpa_service.dto.response.VpaVerificationResponse;
 import com.project.vpa_service.service.VpaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,14 +23,26 @@ import java.util.Map;
 @RequestMapping("/api/vpas")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "VPA Management", description = "APIs for managing Virtual Payment Addresses (UPI IDs)")
 public class VpaController {
 
     private final VpaService vpaService;
 
-    /**
-     * Create a new VPA
-     * POST /api/vpas
-     */
+    @Operation(
+            summary = "Health check",
+            description = "Returns the health status of the VPA Service"
+    )
+    @GetMapping("/health")
+    public ResponseEntity<ApiResponse<Map<String, String>>> healthCheck() {
+        return ResponseEntity.ok(ApiResponse.success(
+                Map.of("status", "UP", "service", "vpa-service"),
+                "Service is healthy"));
+    }
+
+    @Operation(
+            summary = "Create a new VPA",
+            description = "Creates a new Virtual Payment Address (UPI ID) for a user"
+    )
     @PostMapping
     public ResponseEntity<ApiResponse<VpaResponse>> createVpa(
             @Valid @RequestBody CreateVpaRequest request) {
@@ -38,58 +53,10 @@ public class VpaController {
                 .body(ApiResponse.success(vpa, "VPA created successfully"));
     }
 
-    /**
-     * Get VPA by ID
-     * GET /api/vpas/{vpaId}
-     */
-    @GetMapping("/{vpaId}")
-    public ResponseEntity<ApiResponse<VpaResponse>> getVpaById(
-            @PathVariable String vpaId) {
-        log.info("Fetching VPA by ID: {}", vpaId);
-        VpaResponse vpa = vpaService.getVpaById(vpaId);
-        return ResponseEntity.ok(ApiResponse.success(vpa, "VPA fetched successfully"));
-    }
-
-    /**
-     * Get VPA by address
-     * GET /api/vpas/address/{vpaAddress}
-     */
-    @GetMapping("/address/{vpaAddress}")
-    public ResponseEntity<ApiResponse<VpaResponse>> getVpaByAddress(
-            @PathVariable String vpaAddress) {
-        log.info("Fetching VPA by address: {}", vpaAddress);
-        VpaResponse vpa = vpaService.getVpaByAddress(vpaAddress);
-        return ResponseEntity.ok(ApiResponse.success(vpa, "VPA fetched successfully"));
-    }
-
-    /**
-     * Get all VPAs for a user
-     * GET /api/vpas/user/{userId}
-     */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<List<VpaResponse>>> getVpasByUserId(
-            @PathVariable String userId) {
-        log.info("Fetching VPAs for user: {}", userId);
-        List<VpaResponse> vpas = vpaService.getVpasByUserId(userId);
-        return ResponseEntity.ok(ApiResponse.success(vpas, "VPAs fetched successfully"));
-    }
-
-    /**
-     * Get primary VPA for a user
-     * GET /api/vpas/user/{userId}/primary
-     */
-    @GetMapping("/user/{userId}/primary")
-    public ResponseEntity<ApiResponse<VpaResponse>> getPrimaryVpa(
-            @PathVariable String userId) {
-        log.info("Fetching primary VPA for user: {}", userId);
-        VpaResponse vpa = vpaService.getPrimaryVpa(userId);
-        return ResponseEntity.ok(ApiResponse.success(vpa, "Primary VPA fetched successfully"));
-    }
-
-    /**
-     * Verify VPA (check if exists and active)
-     * POST /api/vpas/verify
-     */
+    @Operation(
+            summary = "Verify VPA",
+            description = "Checks if a VPA exists and is active. Returns masked account holder name."
+    )
     @PostMapping("/verify")
     public ResponseEntity<ApiResponse<VpaVerificationResponse>> verifyVpa(
             @Valid @RequestBody VerifyVpaRequest request) {
@@ -99,12 +66,13 @@ public class VpaController {
         return ResponseEntity.ok(ApiResponse.success(result, message));
     }
 
-    /**
-     * Check if VPA is available
-     * GET /api/vpas/check-availability/{vpaAddress}
-     */
+    @Operation(
+            summary = "Check VPA availability",
+            description = "Checks if a VPA address is available for registration"
+    )
     @GetMapping("/check-availability/{vpaAddress}")
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkVpaAvailability(
+            @Parameter(description = "VPA address to check", example = "rahul@okaxis")
             @PathVariable String vpaAddress) {
         log.info("Checking VPA availability: {}", vpaAddress);
         boolean available = vpaService.isVpaAvailable(vpaAddress);
@@ -113,12 +81,65 @@ public class VpaController {
                 available ? "VPA is available" : "VPA is already taken"));
     }
 
-    /**
-     * Set VPA as primary
-     * PUT /api/vpas/{vpaId}/set-primary
-     */
+    @Operation(
+            summary = "Get VPA by address",
+            description = "Retrieves VPA details by its address"
+    )
+    @GetMapping("/address/{vpaAddress}")
+    public ResponseEntity<ApiResponse<VpaResponse>> getVpaByAddress(
+            @Parameter(description = "VPA address", example = "rahul@okaxis")
+            @PathVariable String vpaAddress) {
+        log.info("Fetching VPA by address: {}", vpaAddress);
+        VpaResponse vpa = vpaService.getVpaByAddress(vpaAddress);
+        return ResponseEntity.ok(ApiResponse.success(vpa, "VPA fetched successfully"));
+    }
+
+    @Operation(
+            summary = "Get user's VPAs",
+            description = "Retrieves all VPAs belonging to a user"
+    )
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse<List<VpaResponse>>> getVpasByUserId(
+            @Parameter(description = "User ID", example = "U100001")
+            @PathVariable String userId) {
+        log.info("Fetching VPAs for user: {}", userId);
+        List<VpaResponse> vpas = vpaService.getVpasByUserId(userId);
+        return ResponseEntity.ok(ApiResponse.success(vpas, "VPAs fetched successfully"));
+    }
+
+    @Operation(
+            summary = "Get primary VPA",
+            description = "Retrieves the primary VPA for a user"
+    )
+    @GetMapping("/user/{userId}/primary")
+    public ResponseEntity<ApiResponse<VpaResponse>> getPrimaryVpa(
+            @Parameter(description = "User ID", example = "U100001")
+            @PathVariable String userId) {
+        log.info("Fetching primary VPA for user: {}", userId);
+        VpaResponse vpa = vpaService.getPrimaryVpa(userId);
+        return ResponseEntity.ok(ApiResponse.success(vpa, "Primary VPA fetched successfully"));
+    }
+
+    @Operation(
+            summary = "Get VPA by ID",
+            description = "Retrieves VPA details by its ID"
+    )
+    @GetMapping("/{vpaId}")
+    public ResponseEntity<ApiResponse<VpaResponse>> getVpaById(
+            @Parameter(description = "VPA ID", example = "VPA100001")
+            @PathVariable String vpaId) {
+        log.info("Fetching VPA by ID: {}", vpaId);
+        VpaResponse vpa = vpaService.getVpaById(vpaId);
+        return ResponseEntity.ok(ApiResponse.success(vpa, "VPA fetched successfully"));
+    }
+
+    @Operation(
+            summary = "Set primary VPA",
+            description = "Sets a VPA as the user's primary VPA"
+    )
     @PutMapping("/{vpaId}/set-primary")
     public ResponseEntity<ApiResponse<Void>> setPrimaryVpa(
+            @Parameter(description = "VPA ID", example = "VPA100001")
             @PathVariable String vpaId,
             @RequestBody Map<String, String> request) {
         String userId = request.get("userId");
@@ -127,12 +148,13 @@ public class VpaController {
         return ResponseEntity.ok(ApiResponse.success("VPA set as primary successfully"));
     }
 
-    /**
-     * Update linked account
-     * PUT /api/vpas/{vpaId}/link-account
-     */
+    @Operation(
+            summary = "Update linked account",
+            description = "Updates the bank account linked to a VPA"
+    )
     @PutMapping("/{vpaId}/link-account")
     public ResponseEntity<ApiResponse<Void>> updateLinkedAccount(
+            @Parameter(description = "VPA ID", example = "VPA100001")
             @PathVariable String vpaId,
             @RequestBody Map<String, String> request) {
         String accountId = request.get("accountId");
@@ -141,38 +163,29 @@ public class VpaController {
         return ResponseEntity.ok(ApiResponse.success("Linked account updated successfully"));
     }
 
-    /**
-     * Mark VPA as verified
-     * PUT /api/vpas/{vpaId}/verify
-     */
-    @PutMapping("/{vpaId}/verify")
+    @Operation(
+            summary = "Mark VPA as verified",
+            description = "Marks a VPA as verified after validation"
+    )
+    @PutMapping("/{vpaId}/mark-verified")
     public ResponseEntity<ApiResponse<Void>> markVpaAsVerified(
+            @Parameter(description = "VPA ID", example = "VPA100001")
             @PathVariable String vpaId) {
         log.info("Marking VPA as verified: {}", vpaId);
         vpaService.markVpaAsVerified(vpaId);
         return ResponseEntity.ok(ApiResponse.success("VPA verified successfully"));
     }
 
-    /**
-     * Deactivate VPA
-     * DELETE /api/vpas/{vpaId}
-     */
+    @Operation(
+            summary = "Deactivate VPA",
+            description = "Deactivates (soft deletes) a VPA"
+    )
     @DeleteMapping("/{vpaId}")
     public ResponseEntity<ApiResponse<Void>> deactivateVpa(
+            @Parameter(description = "VPA ID", example = "VPA100001")
             @PathVariable String vpaId) {
         log.info("Deactivating VPA: {}", vpaId);
         vpaService.deactivateVpa(vpaId);
         return ResponseEntity.ok(ApiResponse.success("VPA deactivated successfully"));
-    }
-
-    /**
-     * Health check
-     * GET /api/vpas/health
-     */
-    @GetMapping("/health")
-    public ResponseEntity<ApiResponse<Map<String, String>>> healthCheck() {
-        return ResponseEntity.ok(ApiResponse.success(
-                Map.of("status", "UP", "service", "vpa-service"),
-                "Service is healthy"));
     }
 }
